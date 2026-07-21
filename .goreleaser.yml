@@ -1,0 +1,43 @@
+version: 2
+
+project_name: go-torrent
+
+builds:
+  - skip: true
+
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: New Features
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 100
+    - title: Bug Fixes
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 200
+    - title: Performance
+      regexp: '^.*?perf(\(.+\))??!?:.+$'
+      order: 300
+    - title: Other Changes
+      order: 999
+  filters:
+    exclude:
+      - '^docs?[(:]'
+      - '^test[(:]'
+      - '^chore[(:]'
+      - '^ci[(:]'
+
+release:
+  github:
+    owner: autobrr
+    name: go-torrent
+  header: |
+    ## {{ .Tag }}
+
+    Install with:
+
+    ```
+    go get github.com/autobrr/go-torrent@{{ .Tag }}
+    ```
+  footer: |
+    **Full Changelog**: https://github.com/autobrr/go-torrent/compare/{{ .PreviousTag }}...{{ .Tag }}
