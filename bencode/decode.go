@@ -228,7 +228,7 @@ func (d *Decoder) decodeInt(v reflect.Value) error {
 		if err != nil {
 			// An out-of-range literal is still a non-zero integer.
 			v.SetBool(true)
-			return nil
+			return nil //nolint:nilerr
 		}
 		v.SetBool(n != 0)
 		return nil

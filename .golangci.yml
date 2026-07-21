@@ -1,0 +1,27 @@
+version: "2"
+
+linters:
+  # standard = errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - misspell
+    - unconvert
+    - copyloopvar
+    - nilerr
+  settings:
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+  exclusions:
+    # silence well-known false positives (e.g. errcheck on fmt.Fprintf
+    # to a bytes.Buffer, staticcheck noise in tests)
+    presets:
+      - std-error-handling
+      - common-false-positives
+    paths:
+      - pre-optimization
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
