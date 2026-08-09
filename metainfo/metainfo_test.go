@@ -290,8 +290,14 @@ func TestUnmarshalSingletonListAnnounce(t *testing.T) {
 func TestUnmarshalStringPrivate(t *testing.T) {
 	var info Info
 	require.NoError(t, bencode.Unmarshal([]byte("d4:name1:n7:private1:1e"), &info))
-	assert.Nil(t, info.Private)
+	require.NotNil(t, info.Private)
+	assert.True(t, *info.Private)
 	assert.Equal(t, "n", info.Name)
+
+	// A private value of an unexpected type is dropped, not a parse error.
+	info = Info{}
+	require.NoError(t, bencode.Unmarshal([]byte("d4:name1:n7:privatedee"), &info))
+	assert.Nil(t, info.Private)
 }
 
 func TestLoadTrailingNewlineFile(t *testing.T) {

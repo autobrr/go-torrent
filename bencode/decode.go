@@ -252,6 +252,16 @@ func (d *Decoder) decodeString(first byte, v reflect.Value) error {
 		}
 		v.SetBytes(content)
 		return nil
+	case v.Kind() == reflect.Bool:
+		// Torrents in the wild encode bool fields such as private as strings.
+		// anacrolix parses these with ParseBool and treats any other
+		// non-empty string as true; match that.
+		b, perr := strconv.ParseBool(string(content))
+		if perr != nil {
+			b = len(content) != 0
+		}
+		v.SetBool(b)
+		return nil
 	}
 	return &UnmarshalTypeError{BencodeTypeName: "string", UnmarshalTargetType: v.Type()}
 }

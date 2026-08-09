@@ -47,6 +47,15 @@ func TestUnmarshalBool(t *testing.T) {
 	requireDecodes(t, "i-5e", true)
 	requireDecodes(t, "i-0e", false)
 
+	// Strings decode as bools the way anacrolix parses them: ParseBool
+	// first, then any non-empty string is true.
+	requireDecodes(t, "1:1", true)
+	requireDecodes(t, "1:0", false)
+	requireDecodes(t, "4:true", true)
+	requireDecodes(t, "5:false", false)
+	requireDecodes(t, "0:", false)
+	requireDecodes(t, "1:x", true)
+
 	var pb *bool
 	require.NoError(t, Unmarshal([]byte("i1e"), &pb))
 	require.NotNil(t, pb)

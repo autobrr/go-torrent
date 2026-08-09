@@ -84,6 +84,9 @@ in the wild. Only the info dict is treated as canonical.
   string `0:`, which fails the entire parse in anacrolix.
 - Junk in optional metadata such as `creation date`, `comment` or
   `created by` never fails a parse, whatever type or value it holds.
+- A `private` value with a type that is not an integer, a string, or a
+  one-element list leaves `Info.Private` nil. In anacrolix, this fails the
+  parse of the whole info dict.
 - Trailing whitespace after the torrent payload is accepted. Some tracker
   webservers append a newline.
 - Unsorted and duplicate dict keys are accepted (the last value wins), as
