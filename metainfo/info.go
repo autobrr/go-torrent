@@ -11,7 +11,7 @@ type Info struct {
 	NameUtf8    string `bencode:"name.utf-8,omitempty"`
 	Length      int64  `bencode:"length,omitempty"`
 	ExtendedFileAttrs
-	Private     *bool      `bencode:"private,omitempty"`
+	Private     *bool      `bencode:"private,omitempty,ignore_unmarshal_type_error"`
 	Source      string     `bencode:"source,omitempty"`
 	Files       []FileInfo `bencode:"files,omitempty"`
 	MetaVersion int64      `bencode:"meta version,omitempty"`

@@ -280,6 +280,20 @@ func TestUnmarshalCreationDateOverflow(t *testing.T) {
 	assert.Equal(t, bencode.Bytes("de"), mi.InfoBytes)
 }
 
+// https://github.com/anacrolix/torrent/issues/297
+func TestUnmarshalSingletonListAnnounce(t *testing.T) {
+	var mi MetaInfo
+	require.NoError(t, bencode.Unmarshal([]byte("d8:announcel12:http://a/anne4:infodee"), &mi))
+	assert.Equal(t, "http://a/ann", mi.Announce)
+}
+
+func TestUnmarshalStringPrivate(t *testing.T) {
+	var info Info
+	require.NoError(t, bencode.Unmarshal([]byte("d4:name1:n7:private1:1e"), &info))
+	assert.Nil(t, info.Private)
+	assert.Equal(t, "n", info.Name)
+}
+
 func TestLoadTrailingNewlineFile(t *testing.T) {
 	mi, err := LoadFromFile("testdata/minimal-trailing-newline.torrent")
 	require.NoError(t, err)

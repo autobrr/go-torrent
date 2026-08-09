@@ -71,6 +71,19 @@ func TestUnmarshalList(t *testing.T) {
 	assert.Empty(t, got)
 }
 
+// Torrents in the wild encode scalar fields as one-element lists
+// (anacrolix/torrent issue #297).
+func TestUnmarshalSingletonList(t *testing.T) {
+	requireDecodes(t, "l4:spame", "spam")
+	requireDecodes(t, "li42ee", int64(42))
+	requireDecodes(t, "ll4:spamee", "spam")
+
+	var s string
+	var typeErr *UnmarshalTypeError
+	require.ErrorAs(t, Unmarshal([]byte("le"), &s), &typeErr)
+	require.ErrorAs(t, Unmarshal([]byte("l4:spam4:eggse"), &s), &typeErr)
+}
+
 func TestUnmarshalMap(t *testing.T) {
 	requireDecodes(t, "d1:ai1e1:bi2ee", map[string]int{"a": 1, "b": 2})
 	requireDecodes(t, "d3:cow3:moo4:spaml1:a1:bee", map[string]any{
@@ -183,7 +196,8 @@ func TestUnmarshalTypeErrorCases(t *testing.T) {
 		{"4:spam", new(int), "string"},
 		{"4:spam", new([][]string), "string"},
 		{"i1e", new(string), "integer"},
-		{"li1ee", new(string), "list"},
+		{"li1ee", new(string), "integer"},
+		{"l1:a1:be", new(string), "list"},
 		{"le", new(map[string]int), "list"},
 		{"d1:ai1ee", new(int), "dict"},
 		{"de", new([]int), "dict"},
