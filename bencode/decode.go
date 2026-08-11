@@ -252,13 +252,23 @@ func (d *Decoder) decodeString(first byte, v reflect.Value) error {
 		}
 		v.SetBytes(content)
 		return nil
+	case v.Kind() == reflect.Bool:
+		// Torrents in the wild encode bool fields such as private as strings.
+		// anacrolix parses these with ParseBool and treats any other
+		// non-empty string as true; match that.
+		b, perr := strconv.ParseBool(string(content))
+		if perr != nil {
+			b = len(content) != 0
+		}
+		v.SetBool(b)
+		return nil
 	}
 	return &UnmarshalTypeError{BencodeTypeName: "string", UnmarshalTargetType: v.Type()}
 }
 
 func (d *Decoder) decodeList(v reflect.Value, depth int) error {
 	if v.Kind() != reflect.Slice {
-		return &UnmarshalTypeError{BencodeTypeName: "list", UnmarshalTargetType: v.Type()}
+		return d.decodeSingletonList(v, depth)
 	}
 	n := 0
 	for {
@@ -287,6 +297,21 @@ func (d *Decoder) decodeList(v reflect.Value, depth int) error {
 	if n == 0 {
 		v.Set(reflect.MakeSlice(v.Type(), 0, 0))
 	}
+	return nil
+}
+
+// decodeSingletonList unwraps a one-element list into a non-slice target.
+// Torrents in the wild encode scalar fields such as announce or name as
+// one-element lists (anacrolix/torrent issue #297).
+func (d *Decoder) decodeSingletonList(v reflect.Value, depth int) error {
+	l := reflect.New(reflect.SliceOf(v.Type())).Elem()
+	if err := d.decodeList(l, depth); err != nil {
+		return err
+	}
+	if l.Len() != 1 {
+		return &UnmarshalTypeError{BencodeTypeName: "list", UnmarshalTargetType: v.Type()}
+	}
+	v.Set(l.Index(0))
 	return nil
 }
 
@@ -385,6 +410,13 @@ func (d *Decoder) decodeIgnoringTypeError(fv reflect.Value, key string, depth in
 		return nil
 	}
 	if _, ok := errors.AsType[*UnmarshalTypeError](err); ok {
+		// Reset pointer fields so a pointer allocated before the decode
+		// failed cannot masquerade as a present zero value (private as a
+		// string must leave Private nil, not pointing at false). Slices keep
+		// their fully decoded prefix.
+		if fv.Kind() == reflect.Pointer {
+			fv.Set(reflect.Zero(fv.Type()))
+		}
 		return nil
 	}
 	return fmt.Errorf("parsing value for key %q: %w", key, err)

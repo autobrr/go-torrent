@@ -280,6 +280,26 @@ func TestUnmarshalCreationDateOverflow(t *testing.T) {
 	assert.Equal(t, bencode.Bytes("de"), mi.InfoBytes)
 }
 
+// https://github.com/anacrolix/torrent/issues/297
+func TestUnmarshalSingletonListAnnounce(t *testing.T) {
+	var mi MetaInfo
+	require.NoError(t, bencode.Unmarshal([]byte("d8:announcel12:http://a/anne4:infodee"), &mi))
+	assert.Equal(t, "http://a/ann", mi.Announce)
+}
+
+func TestUnmarshalStringPrivate(t *testing.T) {
+	var info Info
+	require.NoError(t, bencode.Unmarshal([]byte("d4:name1:n7:private1:1e"), &info))
+	require.NotNil(t, info.Private)
+	assert.True(t, *info.Private)
+	assert.Equal(t, "n", info.Name)
+
+	// A private value of an unexpected type is dropped, not a parse error.
+	info = Info{}
+	require.NoError(t, bencode.Unmarshal([]byte("d4:name1:n7:privatedee"), &info))
+	assert.Nil(t, info.Private)
+}
+
 func TestLoadTrailingNewlineFile(t *testing.T) {
 	mi, err := LoadFromFile("testdata/minimal-trailing-newline.torrent")
 	require.NoError(t, err)

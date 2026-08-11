@@ -47,6 +47,15 @@ func TestUnmarshalBool(t *testing.T) {
 	requireDecodes(t, "i-5e", true)
 	requireDecodes(t, "i-0e", false)
 
+	// Strings decode as bools the way anacrolix parses them: ParseBool
+	// first, then any non-empty string is true.
+	requireDecodes(t, "1:1", true)
+	requireDecodes(t, "1:0", false)
+	requireDecodes(t, "4:true", true)
+	requireDecodes(t, "5:false", false)
+	requireDecodes(t, "0:", false)
+	requireDecodes(t, "1:x", true)
+
 	var pb *bool
 	require.NoError(t, Unmarshal([]byte("i1e"), &pb))
 	require.NotNil(t, pb)
@@ -69,6 +78,19 @@ func TestUnmarshalList(t *testing.T) {
 	require.NoError(t, Unmarshal([]byte("le"), &got))
 	require.NotNil(t, got)
 	assert.Empty(t, got)
+}
+
+// Torrents in the wild encode scalar fields as one-element lists
+// (anacrolix/torrent issue #297).
+func TestUnmarshalSingletonList(t *testing.T) {
+	requireDecodes(t, "l4:spame", "spam")
+	requireDecodes(t, "li42ee", int64(42))
+	requireDecodes(t, "ll4:spamee", "spam")
+
+	var s string
+	var typeErr *UnmarshalTypeError
+	require.ErrorAs(t, Unmarshal([]byte("le"), &s), &typeErr)
+	require.ErrorAs(t, Unmarshal([]byte("l4:spam4:eggse"), &s), &typeErr)
 }
 
 func TestUnmarshalMap(t *testing.T) {
@@ -183,7 +205,8 @@ func TestUnmarshalTypeErrorCases(t *testing.T) {
 		{"4:spam", new(int), "string"},
 		{"4:spam", new([][]string), "string"},
 		{"i1e", new(string), "integer"},
-		{"li1ee", new(string), "list"},
+		{"li1ee", new(string), "integer"},
+		{"l1:a1:be", new(string), "list"},
 		{"le", new(map[string]int), "list"},
 		{"d1:ai1ee", new(int), "dict"},
 		{"de", new([]int), "dict"},
